@@ -28,6 +28,8 @@ jobs:
       - name: Generate control file from template
         run: envsubst < control.template > supabase/DEBIAN/control
 
+      - run: cat supabase/DEBIAN/control
+
       - name: Build .deb package
         run: |
           mkdir -p dist
