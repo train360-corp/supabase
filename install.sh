@@ -124,8 +124,9 @@ install_kong() {
 
 function install_package() {
   info "installing package"
-  wget -O supabase.deb "https://github.com/train360-corp/supabase/releases/download/v__VERSION__/supabase___VERSION___$(dpkg --print-architecture).deb"
-  apt install -y -f ./supabase.deb
+  TMP_DEB="/tmp/supabase.deb"
+  wget -O "$TMP_DEB" "https://github.com/train360-corp/supabase/releases/download/v__VERSION__/supabase___VERSION___$(dpkg --print-architecture).deb"
+  apt install -y -f "$TMP_DEB"
   ok "package installed"
 }
 
