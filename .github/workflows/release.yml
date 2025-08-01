@@ -59,6 +59,10 @@ jobs:
       - name: List downloaded artifacts
         run: find artifacts -type f
 
+      - run: sed -i "s/__VERSION__/${VERSION}/g" install.sh
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
