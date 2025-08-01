@@ -1,0 +1,18 @@
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  version:
+    uses: train360-corp/actions/.github/workflows/version-check.yml@main
+    with:
+      file-name: version.json
+      json-version-path: .version
+    secrets:
+      github-token: ${{ secrets.GITHUB_TOKEN }}
+  build:
+    runs-on: ubuntu-22.04
+    needs: version
+    steps:
+      - run: envsubst < control.template > supabase/DEBIAN/control
