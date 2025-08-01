@@ -15,4 +15,6 @@ jobs:
     runs-on: ubuntu-22.04
     needs: version
     steps:
+      - uses: actions/checkout@v4
+
       - run: envsubst < control.template > supabase/DEBIAN/control
