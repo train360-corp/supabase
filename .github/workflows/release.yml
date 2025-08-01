@@ -45,6 +45,8 @@ jobs:
     needs:
       - build
       - version
+    permissions:
+      contents: write
     steps:
       - uses: actions/download-artifact@v4
         with:
