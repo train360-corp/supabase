@@ -1,0 +1,20 @@
+[Unit]
+Description=Kong (Supabase)
+After=syslog.target network.target
+
+[Service]
+User=root
+Group=root
+Type=forking
+Environment="KONG_DATABASE=off"
+Environment="KONG_DECLARATIVE_CONFIG=/etc/kong/gen.kong.yml"
+Environment="KONG_DNS_ORDER=LAST,A,CNAME"
+Environment="KONG_PLUGINS=request-transformer,cors,key-auth,acl,basic-auth"
+Environment="KONG_NGINX_PROXY_PROXY_BUFFER_SIZE=160k"
+Environment="KONG_NGINX_PROXY_PROXY_BUFFERS=64 160k"
+ExecStart=/usr/local/bin/kong start
+ExecReload=/usr/local/bin/kong reload
+ExecStop=/usr/local/bin/kong stop
+
+[Install]
+WantedBy=multi-user.target

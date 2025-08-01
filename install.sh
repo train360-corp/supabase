@@ -53,38 +53,6 @@ for a in "${SUPPORTED_ARCHS[@]}"; do
 done
 [[ $IS_ARCH_SUPPORTED -eq 1 ]] || error "Architecture Unsupported: $ARCH"
 
-# Install config
-function install_config() {
-  info "writing config file"
-
-  mkdir -p /etc/supabase || error "failed to create /etc/supabase"
-
-  DASHBOARD_USERNAME="admin"
-  DASHBOARD_PASSWORD=$(openssl rand -base64 48 | tr -dc 'A-Za-z0-9' | head -c 64)
-
-  cat > /etc/supabase/conf.env <<EOF
-DASHBOARD_USERNAME=$DASHBOARD_USERNAME
-DASHBOARD_PASSWORD=$DASHBOARD_PASSWORD
-EOF
-
-  chmod 600 /etc/supabase/conf.env
-  ok "wrote config file to /etc/supabase/conf.env"
-
-  info "writing env-injecting wrapper script..."
-
-  cat > /usr/local/bin/with-supabase-config <<'WRAPPER'
-#!/bin/bash
-set -a  # Export all variables
-source /etc/supabase/conf.env
-set +a
-
-exec "$@"
-WRAPPER
-
-  chmod +x /usr/local/bin/with-supabase-config
-  ok "Created wrapper: /usr/local/bin/with-supabase-config"
-}
-
 # Install Kong
 install_kong() {
 
@@ -351,7 +319,6 @@ function install_postgres() {
 function install() {
   install_kong
   install_package
-  install_config
 }
 
 install
