@@ -109,7 +109,7 @@ install_kong() {
     error "Linux distro unsupported by Kong: $ID"
   fi
 
-  mkdir -p /etc/kong
+  mkdir -p /etc/kong || error "failed to create /etc/kong"
   curl -sLo /etc/kong/base.kong.yml "$KONG_CONFIG_URL"
   chown kong:0 /etc/kong/base.kong.yml \
      && chown kong:0 /usr/local/bin/kong \

@@ -71,8 +71,7 @@ jobs:
             Download and install the `.deb` package for your architecture:
 
             ```bash
-            wget -O supabase.deb "https://github.com/train360-corp/supabase/releases/download/v${{ needs.version.outputs.version }}/supabase_${{ needs.version.outputs.version }}_$(dpkg --print-architecture).deb"
-            sudo dpkg -i supabase.deb
+            bash <(wget -qO- "https://github.com/train360-corp/supabase/releases/download/v${{ needs.version.outputs.version }}/install.sh")
             ```
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
