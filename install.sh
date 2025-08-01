@@ -125,7 +125,7 @@ install_kong() {
 function install_package() {
 
   wget -O supabase.deb "https://github.com/train360-corp/supabase/releases/download/v0.0.11/supabase_0.0.11_$(dpkg --print-architecture).deb"
-  apt-get install -f ./supabase.deb
+  apt install -y -f ./supabase.deb
 
 }
 
@@ -348,11 +348,9 @@ function install_postgres() {
 }
 
 function install() {
-  install_package
-
-  install_config
-
   install_kong
+  install_package
+  install_config
 }
 
 install
