@@ -11,6 +11,11 @@ SUPPORTED_DISTROS=("debian" "ubuntu" "rhel")
 RED="\033[1;31m"
 BLUE="\033[1;34m"
 RESET="\033[0m"
+GREEN="\033[1;32m"
+
+ok() {
+  echo -e "${GREEN}[OK   ] $*${RESET}"
+}
 
 error() {
   echo -e "${RED}[ERROR] $*${RESET}" >&2
@@ -18,7 +23,7 @@ error() {
 }
 
 info() {
-  echo -e "${BLUE}[INFO] $*${RESET}"
+  echo -e "${BLUE}[INFO ] $*${RESET}"
 }
 
 # Must run as root
@@ -50,6 +55,7 @@ done
 
 # Install Kong
 install_kong() {
+  info "installing Kong"
   if [[ "$ID" == "debian" || "$ID" == "ubuntu" ]]; then
     codename=$(lsb_release -sc 2>/dev/null || grep -oP 'VERSION_CODENAME=\K\w+' /etc/os-release)
     curl -1sLf "https://packages.konghq.com/public/gateway-311/gpg.CF9CDA9D288571F9.key" |
@@ -67,6 +73,7 @@ install_kong() {
   else
     error "Linux distro unsupported by Kong: $ID"
   fi
+  ok "Kong installed"
 }
 
 install_kong
