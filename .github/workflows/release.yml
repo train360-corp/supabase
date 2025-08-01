@@ -67,6 +67,7 @@ jobs:
           files: |
             artifacts/**/*.deb
             LICENSE
+            install.sh
           body: |
             ## Installation
 
