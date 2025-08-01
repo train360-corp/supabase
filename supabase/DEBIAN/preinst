@@ -70,18 +70,6 @@ EOF
 
   chmod 600 /etc/supabase/conf.env
   ok "wrote config file to /etc/supabase/conf.env"
-
-  info "writing env-injecting wrapper script..."
-
-  cat > /usr/local/bin/with-supabase-config <<'WRAPPER'
-#!/bin/bash
-set -a  # Export all variables
-source /etc/supabase/conf.env
-set +a
-
-exec "$@"
-WRAPPER
-
-  chmod +x /usr/local/bin/with-supabase-config
-  ok "Created wrapper: /usr/local/bin/with-supabase-config"
 }
+
+install_config
