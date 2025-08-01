@@ -5,7 +5,7 @@ set -euo pipefail
 source /etc/os-release
 ARCH="$(uname -m)"
 SUPPORTED_ARCHS=("x86_64" "aarch64")
-SUPPORTED_DISTROS=("debian" "ubuntu" "rhel")
+SUPPORTED_DISTROS=("debian" "ubuntu")
 
 # Colors
 RED="\033[1;31m"

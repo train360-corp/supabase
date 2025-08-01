@@ -17,4 +17,5 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - run: envsubst < control.template > supabase/DEBIAN/control
+      - name: generate control file from template
+        run: envsubst < control.template > supabase/DEBIAN/control
