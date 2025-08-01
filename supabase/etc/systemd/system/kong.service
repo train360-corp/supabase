@@ -12,9 +12,9 @@ Environment="KONG_DNS_ORDER=LAST,A,CNAME"
 Environment="KONG_PLUGINS=request-transformer,cors,key-auth,acl,basic-auth"
 Environment="KONG_NGINX_PROXY_PROXY_BUFFER_SIZE=160k"
 Environment="KONG_NGINX_PROXY_PROXY_BUFFERS=64 160k"
-ExecStart=/usr/local/bin/kong start
-ExecReload=/usr/local/bin/kong reload
-ExecStop=/usr/local/bin/kong stop
+ExecStart=/usr/local/bin/with-supabase-config /usr/local/bin/kong start
+ExecReload=/usr/local/bin/with-supabase-config /usr/local/bin/kong reload
+ExecStop=/usr/local/bin/with-supabase-config /usr/local/bin/kong stop
 
 [Install]
 WantedBy=multi-user.target
