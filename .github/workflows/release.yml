@@ -14,8 +14,27 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     needs: version
+    strategy:
+      matrix:
+        arch: [ amd64, arm64 ]
+
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      ARCH: ${{ matrix.arch }}
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: generate control file from template
+      - name: Generate control file from template
         run: envsubst < control.template > supabase/DEBIAN/control
+
+      - name: Build .deb package
+        run: |
+          mkdir -p dist
+          dpkg-deb --build supabase "dist/supabase_${VERSION}_${ARCH}.deb"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: supabase-deb-${{ matrix.arch }}
+          path: dist/*.deb
