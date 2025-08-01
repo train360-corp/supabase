@@ -1,51 +1,71 @@
 #!/bin/bash
+set -euo pipefail
 
 # System
 source /etc/os-release
-ARCH=$(uname -m)
-DISTRO="$ID"
+ARCH="$(uname -m)"
+SUPPORTED_ARCHS=("x86_64" "aarch64")
+SUPPORTED_DISTROS=("debian" "ubuntu" "rhel")
 
 # Colors
 RED="\033[1;31m"
 BLUE="\033[1;34m"
 RESET="\033[0m"
 
-# Error function: red text, then exit
 error() {
   echo -e "${RED}[ERROR] $*${RESET}" >&2
   exit 1
 }
 
-# Info function: blue text
 info() {
   echo -e "${BLUE}[INFO] $*${RESET}"
 }
 
-# run as root or with sudo
+# Must run as root
 if [[ $EUID -ne 0 ]]; then
-    error "This script must be run with sudo or as root."
+  error "This script must be run with sudo or as root."
 fi
 
-function install_kong() {
-
-  if [[ "$ARCH" != "x86_64" && "$ARCH" != "aarch64" ]]; then
-    error "Unsupported architecture: $ARCH"
+# Check supported distro
+IS_DISTRO_SUPPORTED=0
+for d in "${SUPPORTED_DISTROS[@]}"; do
+  if [[ "$ID" == "$d" ]]; then
+    IS_DISTRO_SUPPORTED=1
+    info "Linux Distro: $ID"
+    break
   fi
+done
+[[ $IS_DISTRO_SUPPORTED -eq 1 ]] || error "Linux Distro Unsupported: $ID"
 
-  if [[ "$ID" == "debian" ]]; then
-    curl -1sLf "https://packages.konghq.com/public/gateway-311/gpg.CF9CDA9D288571F9.key" |  gpg --dearmor | tee /usr/share/keyrings/kong-gateway-311-archive-keyring.gpg > /dev/null
-    curl -1sLf "https://packages.konghq.com/public/gateway-311/config.deb.txt?distro=debian&codename=$(lsb_release -sc)" | tee /etc/apt/sources.list.d/kong-gateway-311.list > /dev/null
-    apt-get update && apt install -y kong-enterprise-edition=3.11.0.2
-  elif [[ "$ID" == "ubuntu" ]]; then
-    curl -1sLf "https://packages.konghq.com/public/gateway-311/gpg.CF9CDA9D288571F9.key" |  gpg --dearmor | tee /usr/share/keyrings/kong-gateway-311-archive-keyring.gpg > /dev/null
-    curl -1sLf "https://packages.konghq.com/public/gateway-311/config.deb.txt?distro=ubuntu&codename=noble" | tee /etc/apt/sources.list.d/kong-gateway-311.list > /dev/null
-    apt-get update && apt-get install -y kong-enterprise-edition=3.11.0.2
+# Check supported arch
+IS_ARCH_SUPPORTED=0
+for a in "${SUPPORTED_ARCHS[@]}"; do
+  if [[ "$ARCH" == "$a" ]]; then
+    IS_ARCH_SUPPORTED=1
+    info "Architecture: $ARCH"
+    break
+  fi
+done
+[[ $IS_ARCH_SUPPORTED -eq 1 ]] || error "Architecture Unsupported: $ARCH"
+
+# Install Kong
+install_kong() {
+  if [[ "$ID" == "debian" || "$ID" == "ubuntu" ]]; then
+    codename=$(lsb_release -sc 2>/dev/null || grep -oP 'VERSION_CODENAME=\K\w+' /etc/os-release)
+    curl -1sLf "https://packages.konghq.com/public/gateway-311/gpg.CF9CDA9D288571F9.key" |
+      gpg --dearmor | tee /usr/share/keyrings/kong-gateway-311-archive-keyring.gpg > /dev/null
+    curl -1sLf "https://packages.konghq.com/public/gateway-311/config.deb.txt?distro=$ID&codename=$codename" |
+      tee /etc/apt/sources.list.d/kong-gateway-311.list > /dev/null
+    apt-get update
+    apt-get install -y kong-enterprise-edition=3.11.0.2
   elif [[ "$ID" == "rhel" ]]; then
-    curl -1sLf "https://packages.konghq.com/public/gateway-311/config.rpm.txt?distro=el&codename=$(rpm --eval '%{rhel}')" | tee /etc/yum.repos.d/kong-gateway-311.repo
+    rhelver=$(rpm --eval '%{rhel}')
+    curl -1sLf "https://packages.konghq.com/public/gateway-311/config.rpm.txt?distro=el&codename=$rhelver" |
+      tee /etc/yum.repos.d/kong-gateway-311.repo
     yum -q makecache -y --disablerepo='*' --enablerepo='kong-gateway-311'
     yum install -y kong-enterprise-edition-3.11.0.2
   else
-    error "Linux distro unsupported by kong: $DISTRO"
+    error "Linux distro unsupported by Kong: $ID"
   fi
 }
 
