@@ -321,6 +321,7 @@ function install_postgres() {
 
 function install() {
   install_kong
+  install_postgres
   install_package
 }
 
