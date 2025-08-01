@@ -53,8 +53,43 @@ for a in "${SUPPORTED_ARCHS[@]}"; do
 done
 [[ $IS_ARCH_SUPPORTED -eq 1 ]] || error "Architecture Unsupported: $ARCH"
 
+# Install config
+function install_config() {
+  info "writing config file"
+
+  mkdir -p /etc/supabase || error "failed to create /etc/supabase"
+
+  DASHBOARD_USERNAME="admin"
+  DASHBOARD_PASSWORD=$(openssl rand -base64 48 | tr -dc 'A-Za-z0-9' | head -c 64)
+
+  cat > /etc/supabase/conf.env <<EOF
+DASHBOARD_USERNAME=$DASHBOARD_USERNAME
+DASHBOARD_PASSWORD=$DASHBOARD_PASSWORD
+EOF
+
+  chmod 600 /etc/supabase/conf.env
+  ok "wrote config file to /etc/supabase/conf.env"
+
+  info "writing env-injecting wrapper script..."
+
+  cat > /usr/local/bin/with-supabase-config <<'WRAPPER'
+#!/bin/bash
+set -a  # Export all variables
+source /etc/supabase/conf.env
+set +a
+
+exec "$@"
+WRAPPER
+
+  chmod +x /usr/local/bin/with-supabase-config
+  ok "Created wrapper: /usr/local/bin/with-supabase-config"
+}
+
 # Install Kong
 install_kong() {
+
+  KONG_CONFIG_URL="https://raw.githubusercontent.com/supabase/supabase/03aa5c34740e63a7af09c46a749a4506985363dc/docker/volumes/api/kong.yml"
+
   info "installing Kong"
   if [[ "$ID" == "debian" || "$ID" == "ubuntu" ]]; then
     codename=$(lsb_release -sc 2>/dev/null || grep -oP 'VERSION_CODENAME=\K\w+' /etc/os-release)
@@ -73,7 +108,20 @@ install_kong() {
   else
     error "Linux distro unsupported by Kong: $ID"
   fi
+
+  mkdir -p /etc/kong
+  curl -sLo /etc/kong/base.kong.yml "$KONG_CONFIG_URL"
+  chown kong:0 /etc/kong/base.kong.yml \
+     && chown kong:0 /usr/local/bin/kong \
+     && chown -R kong:0 /usr/local/kong \
+     && ln -s /usr/local/openresty/luajit/bin/luajit /usr/local/bin/luajit \
+     && ln -s /usr/local/openresty/luajit/bin/luajit /usr/local/bin/lua \
+     && ln -s /usr/local/openresty/nginx/sbin/nginx /usr/local/bin/nginx \
+     && kong version
+
   ok "Kong installed"
 }
+
+install_config
 
 install_kong
