@@ -136,13 +136,14 @@ function install_postgres() {
   wal_g_release=2.0.1
 
   apt update -y && apt install -y \
-      curl \
-      gnupg \
-      lsb-release \
-      software-properties-common \
-      wget \
-      sudo \
-      && apt clean
+    git \
+    curl \
+    gnupg \
+    lsb-release \
+    software-properties-common \
+    wget \
+    sudo \
+    && apt clean
 
   adduser --system  --home /var/lib/postgresql --no-create-home --shell /bin/bash --group --gecos "PostgreSQL administrator" postgres
   adduser --system  --no-create-home --shell /bin/bash --group  wal-g
@@ -154,19 +155,15 @@ function install_postgres() {
 
   PATH="${PATH}:/nix/var/nix/profiles/default/bin"
 
-  COPY . /nixpg
+  git clone https://github.com/supabase/postgres.git /tmp/supabase-postgres
+  cd /tmp/supabase-postgres
 
-  WORKDIR /nixpg
+  nix profile install .#psql_15/bin
+  nix store gc
 
-  RUN nix profile install .#psql_15/bin
+  cd /
 
-  RUN nix store gc
-
-
-  WORKDIR /
-
-
-  RUN mkdir -p /usr/lib/postgresql/bin \
+  mkdir -p /usr/lib/postgresql/bin \
       /usr/lib/postgresql/share/postgresql \
       /usr/share/postgresql \
       /var/lib/postgresql \
@@ -175,71 +172,64 @@ function install_postgres() {
       && chown -R postgres:postgres /usr/share/postgresql
 
   # Create symbolic links
-  RUN ln -s /nix/var/nix/profiles/default/bin/* /usr/lib/postgresql/bin/ \
+  ln -s /nix/var/nix/profiles/default/bin/* /usr/lib/postgresql/bin/ \
       && ln -s /nix/var/nix/profiles/default/bin/* /usr/bin/ \
       && chown -R postgres:postgres /usr/bin
 
   # Create symbolic links for PostgreSQL shares
-  RUN ln -s /nix/var/nix/profiles/default/share/postgresql/* /usr/lib/postgresql/share/postgresql/
-  RUN ln -s /nix/var/nix/profiles/default/share/postgresql/* /usr/share/postgresql/
-  RUN chown -R postgres:postgres /usr/lib/postgresql/share/postgresql/
-  RUN chown -R postgres:postgres /usr/share/postgresql/
+  ln -s /nix/var/nix/profiles/default/share/postgresql/* /usr/lib/postgresql/share/postgresql/
+  ln -s /nix/var/nix/profiles/default/share/postgresql/* /usr/share/postgresql/
+  chown -R postgres:postgres /usr/lib/postgresql/share/postgresql/
+  chown -R postgres:postgres /usr/share/postgresql/
+
   # Create symbolic links for contrib directory
-  RUN mkdir -p /usr/lib/postgresql/share/postgresql/contrib \
+  mkdir -p /usr/lib/postgresql/share/postgresql/contrib \
       && find /nix/var/nix/profiles/default/share/postgresql/contrib/ -mindepth 1 -type d -exec sh -c 'for dir do ln -s "$dir" "/usr/lib/postgresql/share/postgresql/contrib/$(basename "$dir")"; done' sh {} + \
       && chown -R postgres:postgres /usr/lib/postgresql/share/postgresql/contrib/
 
-  RUN chown -R postgres:postgres /usr/lib/postgresql
+  chown -R postgres:postgres /usr/lib/postgresql
 
-  RUN ln -sf /usr/lib/postgresql/share/postgresql/timezonesets /usr/share/postgresql/timezonesets
+  ln -sf /usr/lib/postgresql/share/postgresql/timezonesets /usr/share/postgresql/timezonesets
 
+  apt-get update && apt-get install -y --no-install-recommends tzdata
 
-  RUN apt-get update && \
-      apt-get install -y --no-install-recommends tzdata
+  ln -fs /usr/share/zoneinfo/Etc/UTC /etc/localtime dpkg-reconfigure --frontend noninteractive tzdata
 
-  RUN ln -fs /usr/share/zoneinfo/Etc/UTC /etc/localtime && \
-      dpkg-reconfigure --frontend noninteractive tzdata
-
-  RUN apt-get update && \
-      apt-get install -y --no-install-recommends \
+  apt-get update && apt-get install -y --no-install-recommends \
       build-essential \
       checkinstall \
       cmake
 
-  ENV PGDATA=/var/lib/postgresql/data
+  PGDATA=/var/lib/postgresql/data
 
   ####################
   # setup-wal-g.yml
   ####################
-  FROM base as walg
-  ARG wal_g_release
-  WORKDIR /nixpg
+  cd /tmp/supabase-postgres
 
-  RUN nix profile install .#wal-g-3 && \
-      ln -s /nix/var/nix/profiles/default/bin/wal-g-3 /tmp/wal-g
+  RUN nix profile install .#wal-g-3 && ln -s /nix/var/nix/profiles/default/bin/wal-g-3 /tmp/wal-g
 
   RUN nix store gc
 
-  WORKDIR /
+  cd /
+
   # ####################
   # # Download gosu for easy step-down from root
   # ####################
-  FROM base as gosu
-  ARG TARGETARCH
+
   # Install dependencies
-  RUN apt-get update && apt-get install -y --no-install-recommends \
+  apt-get update && apt-get install -y --no-install-recommends \
      gnupg \
      ca-certificates \
      && rm -rf /var/lib/apt/lists/*
-  # Download binary
-  ARG GOSU_VERSION=1.16
-  ARG GOSU_GPG_KEY=B42F6819007F00F88E364FD4036A9C25BF357DD4
-  ADD https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$TARGETARCH \
-      /usr/local/bin/gosu
-  ADD https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$TARGETARCH.asc \
-      /usr/local/bin/gosu.asc
+
+  GOSU_VERSION=1.16
+  GOSU_GPG_KEY=B42F6819007F00F88E364FD4036A9C25BF357DD4
+  curl -fsSL "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$TARGETARCH" -o /usr/local/bin/gosu
+  curl -fsSL "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$TARGETARCH.asc" -o /usr/local/bin/gosu.asc
+
   # Verify checksum
-  RUN gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys $GOSU_GPG_KEY && \
+  gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys $GOSU_GPG_KEY && \
       gpg --batch --verify /usr/local/bin/gosu.asc /usr/local/bin/gosu && \
       gpgconf --kill all && \
       chmod +x /usr/local/bin/gosu
@@ -247,73 +237,86 @@ function install_postgres() {
   # ####################
   # # Build final image
   # ####################
-  FROM gosu as production
-  RUN id postgres || (echo "postgres user does not exist" && exit 1)
+  id postgres || (echo "postgres user does not exist" && exit 1)
   # # Setup extensions
-  COPY --from=walg /tmp/wal-g /usr/local/bin/
+  cp /tmp/wal-g /usr/local/bin/wal-g
+  chmod +x /usr/local/bin/wal-g
 
   # # Initialise configs
-  COPY --chown=postgres:postgres ansible/files/postgresql_config/postgresql.conf.j2 /etc/postgresql/postgresql.conf
-  COPY --chown=postgres:postgres ansible/files/postgresql_config/pg_hba.conf.j2 /etc/postgresql/pg_hba.conf
-  COPY --chown=postgres:postgres ansible/files/postgresql_config/pg_ident.conf.j2 /etc/postgresql/pg_ident.conf
-  COPY --chown=postgres:postgres ansible/files/postgresql_config/postgresql-stdout-log.conf /etc/postgresql/logging.conf
-  COPY --chown=postgres:postgres ansible/files/postgresql_config/supautils.conf.j2 /etc/postgresql-custom/supautils.conf
-  COPY --chown=postgres:postgres ansible/files/postgresql_extension_custom_scripts /etc/postgresql-custom/extension-custom-scripts
-  COPY --chown=postgres:postgres ansible/files/pgsodium_getkey_urandom.sh.j2 /usr/lib/postgresql/bin/pgsodium_getkey.sh
-  COPY --chown=postgres:postgres ansible/files/postgresql_config/custom_read_replica.conf.j2 /etc/postgresql-custom/read-replica.conf
-  COPY --chown=postgres:postgres ansible/files/postgresql_config/custom_walg.conf.j2 /etc/postgresql-custom/wal-g.conf
-  COPY --chown=postgres:postgres ansible/files/walg_helper_scripts/wal_fetch.sh /home/postgres/wal_fetch.sh
-  COPY ansible/files/walg_helper_scripts/wal_change_ownership.sh /root/wal_change_ownership.sh
+  mkdir -p \
+    /etc/postgresql \
+    /etc/postgresql-custom \
+    /usr/lib/postgresql/bin \
+    /home/postgres
 
-  RUN sed -i \
-      -e "s|#unix_socket_directories = '/tmp'|unix_socket_directories = '/var/run/postgresql'|g" \
-      -e "s|#session_preload_libraries = ''|session_preload_libraries = 'supautils'|g" \
-      -e "s|#include = '/etc/postgresql-custom/supautils.conf'|include = '/etc/postgresql-custom/supautils.conf'|g" \
-      -e "s|#include = '/etc/postgresql-custom/wal-g.conf'|include = '/etc/postgresql-custom/wal-g.conf'|g" /etc/postgresql/postgresql.conf && \
-      echo "cron.database_name = 'postgres'" >> /etc/postgresql/postgresql.conf && \
-      echo "pgsodium.getkey_script= '/usr/lib/postgresql/bin/pgsodium_getkey.sh'" >> /etc/postgresql/postgresql.conf && \
-      echo "vault.getkey_script= '/usr/lib/postgresql/bin/pgsodium_getkey.sh'" >> /etc/postgresql/postgresql.conf && \
-      echo 'auto_explain.log_min_duration = 10s' >> /etc/postgresql/postgresql.conf && \
-      usermod -aG postgres wal-g && \
-      mkdir -p /etc/postgresql-custom && \
-      chown postgres:postgres /etc/postgresql-custom
+  cp /tmp/supabase-postgres/ansible/files/postgresql_config/postgresql.conf.j2 /etc/postgresql/postgresql.conf
+  cp /tmp/supabase-postgres/ansible/files/postgresql_config/pg_hba.conf.j2 /etc/postgresql/pg_hba.conf
+  cp /tmp/supabase-postgres/ansible/files/postgresql_config/pg_ident.conf.j2 /etc/postgresql/pg_ident.conf
+  cp /tmp/supabase-postgres/ansible/files/postgresql_config/postgresql-stdout-log.conf /etc/postgresql/logging.conf
+  cp /tmp/supabase-postgres/ansible/files/postgresql_config/supautils.conf.j2 /etc/postgresql-custom/supautils.conf
+  cp -r /tmp/supabase-postgres/ansible/files/postgresql_extension_custom_scripts /etc/postgresql-custom/extension-custom-scripts
+  cp /tmp/supabase-postgres/ansible/files/pgsodium_getkey_urandom.sh.j2 /usr/lib/postgresql/bin/pgsodium_getkey.sh
+  cp /tmp/supabase-postgres/ansible/files/postgresql_config/custom_read_replica.conf.j2 /etc/postgresql-custom/read-replica.conf
+  cp /tmp/supabase-postgres/ansible/files/postgresql_config/custom_walg.conf.j2 /etc/postgresql-custom/wal-g.conf
+  cp /tmp/supabase-postgres/ansible/files/walg_helper_scripts/wal_fetch.sh /home/postgres/wal_fetch.sh
+  cp /tmp/supabase-postgres/ansible/files/walg_helper_scripts/wal_change_ownership.sh /root/wal_change_ownership.sh
+
+  chown -R postgres:postgres \
+    /etc/postgresql \
+    /etc/postgresql-custom \
+    /usr/lib/postgresql/bin \
+    /home/postgres
+
+  chown root:root /root/wal_change_ownership.sh
+
+  sed -i \
+    -e "s|#unix_socket_directories = '/tmp'|unix_socket_directories = '/var/run/postgresql'|g" \
+    -e "s|#session_preload_libraries = ''|session_preload_libraries = 'supautils'|g" \
+    -e "s|#include = '/etc/postgresql-custom/supautils.conf'|include = '/etc/postgresql-custom/supautils.conf'|g" \
+    -e "s|#include = '/etc/postgresql-custom/wal-g.conf'|include = '/etc/postgresql-custom/wal-g.conf'|g" /etc/postgresql/postgresql.conf && \
+    echo "cron.database_name = 'postgres'" >> /etc/postgresql/postgresql.conf && \
+    echo "pgsodium.getkey_script= '/usr/lib/postgresql/bin/pgsodium_getkey.sh'" >> /etc/postgresql/postgresql.conf && \
+    echo "vault.getkey_script= '/usr/lib/postgresql/bin/pgsodium_getkey.sh'" >> /etc/postgresql/postgresql.conf && \
+    echo 'auto_explain.log_min_duration = 10s' >> /etc/postgresql/postgresql.conf && \
+    usermod -aG postgres wal-g && \
+    mkdir -p /etc/postgresql-custom && \
+    chown postgres:postgres /etc/postgresql-custom
 
   # # Include schema migrations
-  COPY migrations/db /docker-entrypoint-initdb.d/
-  COPY ansible/files/pgbouncer_config/pgbouncer_auth_schema.sql /docker-entrypoint-initdb.d/init-scripts/00-schema.sql
-  COPY ansible/files/stat_extension.sql /docker-entrypoint-initdb.d/migrations/00-extension.sql
+  cp /tmp/supabase-postgres/migrations/db /docker-entrypoint-initdb.d/
+  cp /tmp/supabase-postgres/ansible/files/pgbouncer_config/pgbouncer_auth_schema.sql /docker-entrypoint-initdb.d/init-scripts/00-schema.sql
+  cp /tmp/supabase-postgres/ansible/files/stat_extension.sql /docker-entrypoint-initdb.d/migrations/00-extension.sql
 
   # # Add upstream entrypoint script
-  COPY --from=gosu /usr/local/bin/gosu /usr/local/bin/gosu
-  ADD --chmod=0755 \
-      https://github.com/docker-library/postgres/raw/master/15/bullseye/docker-entrypoint.sh \
-      /usr/local/bin/docker-entrypoint.sh
+#  ADD --chmod=0755 \
+#      https://github.com/docker-library/postgres/raw/master/15/bullseye/docker-entrypoint.sh \
+#      /usr/local/bin/docker-entrypoint.sh
 
-  RUN mkdir -p /var/run/postgresql && chown postgres:postgres /var/run/postgresql
+  mkdir -p /var/run/postgresql && chown postgres:postgres /var/run/postgresql
 
-  ENTRYPOINT ["docker-entrypoint.sh"]
+#  ENTRYPOINT ["docker-entrypoint.sh"]
 
-  HEALTHCHECK --interval=2s --timeout=2s --retries=10 CMD pg_isready -U postgres -h localhost
-  STOPSIGNAL SIGINT
-  EXPOSE 5432
+#  HEALTHCHECK --interval=2s --timeout=2s --retries=10 CMD pg_isready -U postgres -h localhost
+#  STOPSIGNAL SIGINT
+#  EXPOSE 5432
 
-  ENV POSTGRES_HOST=/var/run/postgresql
-  ENV POSTGRES_USER=supabase_admin
-  ENV POSTGRES_DB=postgres
-  RUN apt-get update && apt-get install -y --no-install-recommends \
+  POSTGRES_HOST=/var/run/postgresql
+  POSTGRES_USER=supabase_admin
+  POSTGRES_DB=postgres
+  apt-get update && apt-get install -y --no-install-recommends \
       locales \
       && rm -rf /var/lib/apt/lists/* && \
       localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8 \
       && localedef -i C -c -f UTF-8 -A /usr/share/locale/locale.alias C.UTF-8
-  RUN echo "C.UTF-8 UTF-8" > /etc/locale.gen && echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen && locale-gen
-  ENV LANG en_US.UTF-8
-  ENV LANGUAGE en_US:en
-  ENV LC_ALL en_US.UTF-8
-  ENV LOCALE_ARCHIVE /usr/lib/locale/locale-archive
-  RUN mkdir -p /usr/share/postgresql/extension/ && \
+  echo "C.UTF-8 UTF-8" > /etc/locale.gen && echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen && locale-gen
+  LANG=en_US.UTF-8
+  LANGUAGE=en_US:en
+  LC_ALL=en_US.UTF-8
+  LOCALE_ARCHIVE=/usr/lib/locale/locale-archive
+  mkdir -p /usr/share/postgresql/extension/ && \
       ln -s /usr/lib/postgresql/bin/pgsodium_getkey.sh /usr/share/postgresql/extension/pgsodium_getkey && \
       chmod +x /usr/lib/postgresql/bin/pgsodium_getkey.sh
-  CMD ["postgres", "-D", "/etc/postgresql"]
+#  CMD ["postgres", "-D", "/etc/postgresql"]
 }
 
 function install() {
