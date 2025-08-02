@@ -11,9 +11,28 @@ jobs:
       json-version-path: .version
     secrets:
       github-token: ${{ secrets.GITHUB_TOKEN }}
-  build:
+
+  build-studio:
     runs-on: ubuntu-22.04
     needs: version
+    strategy:
+      matrix:
+        arch: [ amd64, arm64 ]
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      ARCH: ${{ matrix.arch }}
+      STUDIO_RELEASE: ghcr.io/supabase/studio:2025.07.21-sha-88dca02
+      STUDIO_RELEASE_SHA: 88dca021d6b5201b3561a37f452a4f91598a8311
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: supabase/supabase
+          ref: ${{ env.STUDIO_RELEASE_SHA }}
+  build:
+    runs-on: ubuntu-22.04
+    needs:
+      - version
+      - build-studio
     strategy:
       matrix:
         arch: [ amd64, arm64 ]
