@@ -65,6 +65,33 @@ if [[ -z "$TARGETARCH" ]]; then
   error "TARGETARCH was not set. Something went wrong with architecture detection."
 fi
 
+# Install config
+function install_config() {
+  info "writing config file"
+
+  mkdir -p /etc/supabase || error "failed to create /etc/supabase"
+
+  DASHBOARD_USERNAME="admin"
+  DASHBOARD_PASSWORD=$(openssl rand -base64 48 | tr -dc 'A-Za-z0-9' | head -c 64)
+  POSTGRES_PASSWORD=$(openssl rand -base64 48 | tr -dc 'A-Za-z0-9' | head -c 64)
+  JWT_SECRET=$(openssl rand -base64 48 | tr -dc 'A-Za-z0-9' | head -c 64)
+
+  # write the config file
+  cat > /etc/supabase/conf.env <<EOF
+DASHBOARD_USERNAME=$DASHBOARD_USERNAME
+DASHBOARD_PASSWORD=$DASHBOARD_PASSWORD
+PGPASSWORD=$POSTGRES_PASSWORD
+POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+JWT_SECRET=$JWT_SECRET
+PGRST_DB_URI=postgres://authenticator=$POSTGRES_PASSWORD@127.0.0.1:5432/postgres
+PGRST_APP_SETTINGS_JWT_SECRET=$JWT_SECRET
+PGRST_JWT_SECRET=$JWT_SECRET
+EOF
+
+  chmod 644 /etc/supabase/conf.env
+  ok "wrote config file to /etc/supabase/conf.env"
+}
+
 # Install Kong
 install_kong() {
 
@@ -223,7 +250,7 @@ function install_postgres() {
   chmod 0700 /var/lib/postgresql/data
 
   # initialize the db
-  sudo -u postgres env LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8 LOCALE_ARCHIVE=/usr/lib/locale/locale-archive with-supabase-config initdb -D /var/lib/postgresql/data
+  sudo -u postgres env LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8 LOCALE_ARCHIVE=/usr/lib/locale/locale-archive /usr/local/bin/with-supabase-config initdb -D /var/lib/postgresql/data
 
   ####################
   # setup-wal-g.yml
@@ -343,6 +370,7 @@ function install_postgrest() {
 }
 
 function install() {
+  install_config
   install_kong
   install_postgres
   install_postgrest
