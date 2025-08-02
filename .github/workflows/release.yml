@@ -32,6 +32,14 @@ jobs:
         with:
           repository: supabase/supabase
           ref: ${{ env.STUDIO_RELEASE_SHA }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm i
+        working-directory: ./apps/studio
+
   build:
     runs-on: ${{ matrix.os.runs-on }}
     needs:
