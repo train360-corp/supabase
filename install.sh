@@ -6,6 +6,7 @@ source /etc/os-release
 ARCH="$(uname -m)"
 SUPPORTED_ARCHS=("x86_64" "aarch64")
 SUPPORTED_DISTROS=("debian" "ubuntu")
+TARGETARCH=""
 
 # Colors
 RED="\033[1;31m"
@@ -48,10 +49,21 @@ for a in "${SUPPORTED_ARCHS[@]}"; do
   if [[ "$ARCH" == "$a" ]]; then
     IS_ARCH_SUPPORTED=1
     info "Architecture: $ARCH"
+    case "$ARCH" in
+      "x86_64")
+        TARGETARCH="amd64"
+        ;;
+      "aarch64")
+        TARGETARCH="arm64"
+        ;;
+    esac
     break
   fi
 done
 [[ $IS_ARCH_SUPPORTED -eq 1 ]] || error "Architecture Unsupported: $ARCH"
+if [[ -z "$TARGETARCH" ]]; then
+  error "TARGETARCH was not set. Something went wrong with architecture detection."
+fi
 
 # Install Kong
 install_kong() {
