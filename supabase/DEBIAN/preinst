@@ -77,7 +77,7 @@ PGRST_APP_SETTINGS_JWT_SECRET=$JWT_SECRET
 PGRST_JWT_SECRET=$JWT_SECRET
 EOF
 
-  chmod 600 /etc/supabase/conf.env
+  chmod 644 /etc/supabase/conf.env
   ok "wrote config file to /etc/supabase/conf.env"
 }
 

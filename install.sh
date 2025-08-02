@@ -216,7 +216,14 @@ function install_postgres() {
       checkinstall \
       cmake
 
+  # create the data directory
   PGDATA=/var/lib/postgresql/data
+  mkdir -p /var/lib/postgresql/data
+  chown -R postgres:postgres /var/lib/postgresql/data
+  chmod 0700 /var/lib/postgresql/data
+
+  # initialize the db
+  sudo -u postgres env LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8 LOCALE_ARCHIVE=/usr/lib/locale/locale-archive with-supabase-config initdb -D /var/lib/postgresql/data
 
   ####################
   # setup-wal-g.yml
