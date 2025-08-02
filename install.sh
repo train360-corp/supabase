@@ -303,36 +303,15 @@ function install_postgres() {
   cp /tmp/supabase-postgres/ansible/files/pgbouncer_config/pgbouncer_auth_schema.sql /docker-entrypoint-initdb.d/init-scripts/00-schema.sql
   cp /tmp/supabase-postgres/ansible/files/stat_extension.sql /docker-entrypoint-initdb.d/migrations/00-extension.sql
 
-  # # Add upstream entrypoint script
-#  ADD --chmod=0755 \
-#      https://github.com/docker-library/postgres/raw/master/15/bullseye/docker-entrypoint.sh \
-#      /usr/local/bin/docker-entrypoint.sh
-
   mkdir -p /var/run/postgresql && chown postgres:postgres /var/run/postgresql
 
-#  ENTRYPOINT ["docker-entrypoint.sh"]
-
-#  HEALTHCHECK --interval=2s --timeout=2s --retries=10 CMD pg_isready -U postgres -h localhost
-#  STOPSIGNAL SIGINT
-#  EXPOSE 5432
-
-  POSTGRES_HOST=/var/run/postgresql
-  POSTGRES_USER=supabase_admin
-  POSTGRES_DB=postgres
-  apt-get update && apt-get install -y --no-install-recommends \
-      locales \
-      && rm -rf /var/lib/apt/lists/* && \
-      localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8 \
-      && localedef -i C -c -f UTF-8 -A /usr/share/locale/locale.alias C.UTF-8
+  apt-get update && apt-get install -y --no-install-recommends locales
+  rm -rf /var/lib/apt/lists/*
   echo "C.UTF-8 UTF-8" > /etc/locale.gen && echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen && locale-gen
-  LANG=en_US.UTF-8
-  LANGUAGE=en_US:en
-  LC_ALL=en_US.UTF-8
-  LOCALE_ARCHIVE=/usr/lib/locale/locale-archive
+
   mkdir -p /usr/share/postgresql/extension/ && \
       ln -s /usr/lib/postgresql/bin/pgsodium_getkey.sh /usr/share/postgresql/extension/pgsodium_getkey && \
       chmod +x /usr/lib/postgresql/bin/pgsodium_getkey.sh
-#  CMD ["postgres", "-D", "/etc/postgresql"]
 
   ok "Postgres installed"
 }

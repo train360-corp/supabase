@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 User=postgres
 Group=postgres
-ExecStart=/usr/local/bin/with-supabase-config /usr/lib/postgresql/15/bin/postgres -D /etc/postgresql
+ExecStart=/usr/local/bin/with-supabase-config /usr/lib/postgresql/bin/postgres -D /etc/postgresql
 Restart=on-failure
 LimitNOFILE=4096
 Environment=PGDATA=/var/lib/postgresql/data
@@ -15,6 +15,13 @@ Environment=PGPORT=5432
 Environment=PGDATABASE=postgres
 Environment=POSTGRES_DB=postgres
 Environment=JWT_EXP=3600
+Environment=LANG=en_US.UTF-8
+Environment=LANGUAGE=en_US:en
+Environment=LC_ALL=en_US.UTF-8
+Environment=LOCALE_ARCHIVE=/usr/lib/locale/locale-archive
+Environment=POSTGRES_HOST=/var/run/postgresql
+Environment=POSTGRES_USER=supabase_admin
+Environment=POSTGRES_DB=postgres
 
 [Install]
 WantedBy=multi-user.target
