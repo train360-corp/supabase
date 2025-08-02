@@ -46,15 +46,15 @@ jobs:
           pnpm --filter studio exec next build
 
       - run: |
-          mkdir -p /app/apps/studio
-          cp -r ./apps/studio/public /app/apps/studio/public
-          cp -r ./apps/studio/.next/standalone/* /app/
-          cp -r ./apps/studio/.next/static /app/apps/studio/.next/static
+          mkdir -p /tmp/app/apps/studio
+          cp -r ./apps/studio/public /tmp/app/apps/studio/public
+          cp -r ./apps/studio/.next/standalone/* /tmp/app/
+          cp -r ./apps/studio/.next/static /tmp/app/apps/studio/.next/static
 
       - uses: actions/upload-artifact@v4
         with:
           name: studio-${{ matrix.os.arch }}
-          path: /app
+          path: /tmp/app
 
   build:
     runs-on: ${{ matrix.os.runs-on }}
