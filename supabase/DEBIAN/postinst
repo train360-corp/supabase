@@ -10,3 +10,7 @@ systemctl start kong
 # postgres
 systemctl enable postgres
 systemctl start postgres
+
+# postgrest
+systemctl enable postgrest
+systemctl start postgrest
