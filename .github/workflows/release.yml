@@ -107,7 +107,7 @@ jobs:
           path: artifacts
 
       - name: List downloaded artifacts
-        run: find artifacts -type f
+        run: cd artifacts && ls -la
 
       - run: sed -i "s/__VERSION__/${VERSION}/g" install.sh
         env:
