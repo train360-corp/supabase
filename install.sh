@@ -347,9 +347,11 @@ function install_postgrest() {
          && apt-get clean \
          && rm -rf /var/lib/apt/lists/*
 
-  curl -LO "https://github.com/PostgREST/postgrest/releases/download/v12.2.8/postgrest-v12.2.8-linux-static-$ARCH.tar.xz"
-  tar -xvf "postgrest-v12.2.8-linux-static-$ARCH.tar.xz"
-  rm -rf "postgrest-v12.2.8-linux-static-$ARCH.tar.xz"
+  cd /supabase/postgrest
+  PACKAGE="postgrest-v12.2.8-linux-static-${ARCH//_/-}.tar.xz"
+  curl -LO "https://github.com/PostgREST/postgrest/releases/download/v12.2.8/$PACKAGE"
+  tar -xvf "$PACKAGE"
+  rm -rf "$PACKAGE"
 
   ok "Postgrest installed"
 }
