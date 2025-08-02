@@ -33,7 +33,6 @@ jobs:
       - name: Build .deb package
         run: |
           mkdir -p dist
-          chmod 755 supabase/DEBIAN/preinst
           chmod 755 supabase/DEBIAN/postinst
           dpkg-deb --build supabase "dist/supabase_${VERSION}_${ARCH}.deb"
 
