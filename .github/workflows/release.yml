@@ -33,12 +33,12 @@ jobs:
           repository: supabase/supabase
           ref: ${{ env.STUDIO_RELEASE_SHA }}
 
+      - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: 'pnpm'
-
-      - uses: pnpm/action-setup@v4
 
       - run: |
           pnpm dlx turbo@2.3.3 prune studio
