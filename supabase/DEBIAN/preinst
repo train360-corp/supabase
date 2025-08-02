@@ -62,10 +62,16 @@ function install_config() {
 
   DASHBOARD_USERNAME="admin"
   DASHBOARD_PASSWORD=$(openssl rand -base64 48 | tr -dc 'A-Za-z0-9' | head -c 64)
+  POSTGRES_PASSWORD=$(openssl rand -base64 48 | tr -dc 'A-Za-z0-9' | head -c 64)
+  JWT_SECRET=$(openssl rand -base64 48 | tr -dc 'A-Za-z0-9' | head -c 64)
 
+  # write the config file
   cat > /etc/supabase/conf.env <<EOF
 DASHBOARD_USERNAME=$DASHBOARD_USERNAME
 DASHBOARD_PASSWORD=$DASHBOARD_PASSWORD
+PGPASSWORD=$POSTGRES_PASSWORD
+POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+JWT_SECRET=$JWT_SECRET
 EOF
 
   chmod 600 /etc/supabase/conf.env
