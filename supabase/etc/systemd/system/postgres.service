@@ -1,0 +1,15 @@
+[Unit]
+Description=Custom PostgreSQL Service
+After=network.target
+
+[Service]
+Type=simple
+User=postgres
+Group=postgres
+ExecStart=/usr/lib/postgresql/15/bin/postgres -D /etc/postgresql
+Restart=on-failure
+LimitNOFILE=4096
+Environment=PGDATA=/var/lib/postgresql/data
+
+[Install]
+WantedBy=multi-user.target

@@ -193,7 +193,8 @@ function install_postgres() {
 
   apt-get update && apt-get install -y --no-install-recommends tzdata
 
-  ln -fs /usr/share/zoneinfo/Etc/UTC /etc/localtime dpkg-reconfigure --frontend noninteractive tzdata
+  ln -fs /usr/share/zoneinfo/Etc/UTC /etc/localtime
+  dpkg-reconfigure --frontend noninteractive tzdata
 
   apt-get update && apt-get install -y --no-install-recommends \
       build-essential \
@@ -207,9 +208,9 @@ function install_postgres() {
   ####################
   cd /tmp/supabase-postgres
 
-  RUN nix profile install .#wal-g-3 && ln -s /nix/var/nix/profiles/default/bin/wal-g-3 /tmp/wal-g
+  nix profile install .#wal-g-3 && ln -s /nix/var/nix/profiles/default/bin/wal-g-3 /tmp/wal-g
 
-  RUN nix store gc
+  nix store gc
 
   cd /
 
