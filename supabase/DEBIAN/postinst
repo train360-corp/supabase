@@ -6,3 +6,7 @@ systemctl daemon-reload
 # kong
 systemctl enable kong
 systemctl start kong
+
+# postgres
+systemctl enable postgres
+systemctl start postgres
