@@ -13,14 +13,18 @@ jobs:
       github-token: ${{ secrets.GITHUB_TOKEN }}
 
   build-studio:
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.os.runs-on }}
     needs: version
     strategy:
       matrix:
-        arch: [ amd64, arm64 ]
+        os:
+          - runs-on: ubuntu-24.04
+            arch: amd64
+          - runs-on: ubuntu-24.04-arm
+            arch: arm64
     env:
       VERSION: ${{ needs.version.outputs.version }}
-      ARCH: ${{ matrix.arch }}
+      ARCH: ${{ matrix.os.arch }}
       STUDIO_RELEASE: ghcr.io/supabase/studio:2025.07.21-sha-88dca02
       STUDIO_RELEASE_SHA: 88dca021d6b5201b3561a37f452a4f91598a8311
     steps:
@@ -29,17 +33,21 @@ jobs:
           repository: supabase/supabase
           ref: ${{ env.STUDIO_RELEASE_SHA }}
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.os.runs-on }}
     needs:
       - version
       - build-studio
     strategy:
       matrix:
-        arch: [ amd64, arm64 ]
+        os:
+          - runs-on: ubuntu-24.04
+            arch: amd64
+          - runs-on: ubuntu-24.04-arm
+            arch: arm64
 
     env:
       VERSION: ${{ needs.version.outputs.version }}
-      ARCH: ${{ matrix.arch }}
+      ARCH: ${{ matrix.os.arch }}
 
     steps:
       - uses: actions/checkout@v4
@@ -58,7 +66,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: supabase-deb-${{ matrix.arch }}
+          name: supabase-deb-${{ matrix.os.arch }}
           path: dist/*.deb
   release:
     runs-on: ubuntu-22.04
