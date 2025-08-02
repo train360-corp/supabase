@@ -299,7 +299,7 @@ function install_postgres() {
     chown postgres:postgres /etc/postgresql-custom
 
   # # Include schema migrations
-  cp /tmp/supabase-postgres/migrations/db /docker-entrypoint-initdb.d/
+  cp -r /tmp/supabase-postgres/migrations/db /docker-entrypoint-initdb.d/
   cp /tmp/supabase-postgres/ansible/files/pgbouncer_config/pgbouncer_auth_schema.sql /docker-entrypoint-initdb.d/init-scripts/00-schema.sql
   cp /tmp/supabase-postgres/ansible/files/stat_extension.sql /docker-entrypoint-initdb.d/migrations/00-extension.sql
 
