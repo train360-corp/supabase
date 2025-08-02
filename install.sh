@@ -111,6 +111,9 @@ function install_package() {
 }
 
 function install_postgres() {
+
+  info "installing postgres"
+
   postgresql_major=15
   postgresql_release=${postgresql_major}.1
   sfcgal_release=1.3.10
@@ -330,6 +333,8 @@ function install_postgres() {
       ln -s /usr/lib/postgresql/bin/pgsodium_getkey.sh /usr/share/postgresql/extension/pgsodium_getkey && \
       chmod +x /usr/lib/postgresql/bin/pgsodium_getkey.sh
 #  CMD ["postgres", "-D", "/etc/postgresql"]
+
+  ok "installed postgres"
 }
 
 function install() {
