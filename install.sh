@@ -112,7 +112,7 @@ function install_package() {
 
 function install_postgres() {
 
-  info "installing postgres"
+  info "installing Postgres"
 
   postgresql_major=15
   postgresql_release=${postgresql_major}.1
@@ -334,12 +334,30 @@ function install_postgres() {
       chmod +x /usr/lib/postgresql/bin/pgsodium_getkey.sh
 #  CMD ["postgres", "-D", "/etc/postgresql"]
 
-  ok "installed postgres"
+  ok "Postgres installed"
+}
+
+function install_postgrest() {
+
+  info "installing Postgrest"
+
+  mkdir -p /supabase/postgrest
+  apt-get update -y \
+         && apt install -y --no-install-recommends libpq-dev zlib1g-dev jq gcc libnuma-dev xz-utils \
+         && apt-get clean \
+         && rm -rf /var/lib/apt/lists/*
+
+  curl -LO "https://github.com/PostgREST/postgrest/releases/download/v12.2.8/postgrest-v12.2.8-linux-static-$ARCH.tar.xz"
+  tar -xvf "postgrest-v12.2.8-linux-static-$ARCH.tar.xz"
+  rm -rf "postgrest-v12.2.8-linux-static-$ARCH.tar.xz"
+
+  ok "Postgrest installed"
 }
 
 function install() {
   install_kong
   install_postgres
+  install_postgrest
   install_package
 }
 

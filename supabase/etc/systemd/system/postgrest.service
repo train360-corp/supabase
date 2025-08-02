@@ -1,0 +1,22 @@
+[Unit]
+Description=PostgREST (Supabase)
+After=network.target postgres.service
+Wants=network.target
+Requires=postgres.service
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/with-supabase-config /supabase/postgrest/postgrest
+Restart=on-failure
+RestartSec=3
+LimitNOFILE=4096
+KillSignal=SIGTERM
+Environment=PGRST_DB_SCHEMAS=public,storage,graphql_public
+Environment=PGRST_DB_ANON_ROLE=anon
+Environment=PGRST_DB_USE_LEGACY_GUCS=false
+Environment=PGRST_APP_SETTINGS_JWT_EXP=3600
+
+[Install]
+WantedBy=multi-user.target

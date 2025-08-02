@@ -1,5 +1,5 @@
 [Unit]
-Description=Custom PostgreSQL Service
+Description=PostgreSQL (Supabase)
 After=network.target
 
 [Service]

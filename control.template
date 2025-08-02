@@ -4,5 +4,4 @@ Section: utils
 Priority: optional
 Architecture: $ARCH
 Maintainer: Train360, Corp. <support@train360.co>
-Depends: supervisor
 Description: Installs Supabase
