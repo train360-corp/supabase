@@ -65,6 +65,19 @@ if [[ -z "$TARGETARCH" ]]; then
   error "TARGETARCH was not set. Something went wrong with architecture detection."
 fi
 
+function install_scripts() {
+  cat > /usr/local/bin/with-supabase-config << 'DONE'
+#!/bin/bash
+
+set -a
+source /etc/supabase/conf.env
+set +a
+
+exec "$@"
+DONE
+  chmod +x /usr/local/bin/with-supabase-config
+}
+
 # Install config
 function install_config() {
   info "writing config file"
@@ -371,6 +384,7 @@ function install_postgrest() {
 
 function install() {
   install_config
+  install_scripts
   install_kong
   install_postgres
   install_postgrest

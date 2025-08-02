@@ -1,7 +1,0 @@
-#!/bin/bash
-
-set -a  # Export all variables
-source /etc/supabase/conf.env
-set +a
-
-exec "$@"
