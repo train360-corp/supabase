@@ -36,9 +36,25 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: 'pnpm'
 
-      - run: npm i
-        working-directory: ./apps/studio
+      - uses: pnpm/action-setup@v4
+
+      - run: |
+          pnpm dlx turbo@2.3.3 prune studio
+          pnpm install --frozen-lockfile
+          pnpm --filter studio exec next build
+
+      - run: |
+          mkdir -p /app/apps/studio
+          cp -r ./apps/studio/public /app/apps/studio/public
+          cp -r ./apps/studio/.next/standalone/* /app/
+          cp -r ./apps/studio/.next/static /app/apps/studio/.next/static
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: studio-${{ matrix.os.arch }}
+          path: /app
 
   build:
     runs-on: ${{ matrix.os.runs-on }}
@@ -97,6 +113,10 @@ jobs:
         env:
           VERSION: ${{ needs.version.outputs.version }}
 
+      - run: |
+          tar -czf studio-amd64.tar.gz -C artifacts/studio-amd64
+          tar -czf studio-arm64.tar.gz -C artifacts/studio-arm64
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -106,6 +126,7 @@ jobs:
             artifacts/**/*.deb
             LICENSE
             install.sh
+            studio-*.tar.gz
           body: |
             ## Installation
 
