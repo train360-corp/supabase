@@ -124,4 +124,4 @@ EOM
 fi
 
 # Exec the passed command (usually `postgres`)
-exec gosu postgres "$@"
+exec "$@"

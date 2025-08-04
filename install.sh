@@ -491,6 +491,9 @@ function install_studio() {
 }
 
 function do_install() {
+
+  info "installing Supabase"
+
   install_deps
   install_config
   install_scripts
@@ -502,6 +505,8 @@ function do_install() {
 
   # must be run AFTER install_package
   chown -R postgres:postgres "$INIT_DB_SCRIPTS"
+
+  ok "Supabase installed"
 }
 
 do_install
