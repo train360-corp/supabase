@@ -47,6 +47,7 @@ jobs:
         with:
           name: supabase-deb-${{ matrix.os.arch }}
           path: dist/*.deb
+
   release:
     runs-on: ubuntu-22.04
     needs:
@@ -65,10 +66,6 @@ jobs:
         env:
           VERSION: ${{ needs.version.outputs.version }}
 
-      - run: |
-          tar -czf studio-amd64.tar.gz -C artifacts/studio-amd64 .
-          tar -czf studio-arm64.tar.gz -C artifacts/studio-arm64 .
-
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -78,7 +75,6 @@ jobs:
             artifacts/**/*.deb
             LICENSE
             install.sh
-            studio-*.tar.gz
           body: |
             ## Installation
 
