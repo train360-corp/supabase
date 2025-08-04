@@ -12,55 +12,10 @@ jobs:
     secrets:
       github-token: ${{ secrets.GITHUB_TOKEN }}
 
-  build-studio:
-    runs-on: ${{ matrix.os.runs-on }}
-    needs: version
-    strategy:
-      matrix:
-        os:
-          - runs-on: ubuntu-24.04
-            arch: amd64
-          - runs-on: ubuntu-24.04-arm
-            arch: arm64
-    env:
-      VERSION: ${{ needs.version.outputs.version }}
-      ARCH: ${{ matrix.os.arch }}
-      STUDIO_RELEASE: ghcr.io/supabase/studio:2025.07.21-sha-88dca02
-      STUDIO_RELEASE_SHA: 88dca021d6b5201b3561a37f452a4f91598a8311
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          repository: supabase/supabase
-          ref: ${{ env.STUDIO_RELEASE_SHA }}
-
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'pnpm'
-
-      - run: |
-          pnpm dlx turbo@2.3.3 prune studio
-          pnpm install --frozen-lockfile
-          pnpm --filter studio exec next build
-
-      - run: |
-          mkdir -p /tmp/app/apps/studio
-          cp -r ./apps/studio/public /tmp/app/apps/studio/public
-          cp -r ./apps/studio/.next/standalone/* /tmp/app/
-          cp -r ./apps/studio/.next/static /tmp/app/apps/studio/.next/static
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: studio-${{ matrix.os.arch }}
-          path: /tmp/app
-
   build:
     runs-on: ${{ matrix.os.runs-on }}
     needs:
       - version
-      - build-studio
     strategy:
       matrix:
         os:
@@ -105,9 +60,6 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
-
-      - name: List downloaded artifacts
-        run: cd artifacts && ls -la
 
       - run: sed -i "s/__VERSION__/${VERSION}/g" install.sh
         env:
