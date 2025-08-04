@@ -65,6 +65,37 @@ if [[ -z "$TARGETARCH" ]]; then
   error "TARGETARCH was not set. Something went wrong with architecture detection."
 fi
 
+
+
+# Default: unset
+PUBLIC_URL=""
+
+# Parse input config
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --public-url)
+      PUBLIC_URL="$2"
+      shift 2
+      ;;
+    *)
+      error "Unknown option: $1"
+      ;;
+  esac
+done
+
+# Validate and normalize
+if [[ -z "$PUBLIC_URL" ]]; then
+  error "--public-url is required"
+elif [[ "$PUBLIC_URL" =~ ^https?://([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(/.*)?/?$ ]]; then
+  PUBLIC_URL="${PUBLIC_URL%/}"
+  info "public URL (--public-url): $PUBLIC_URL"
+else
+  error "Invalid URL (--public-url): $PUBLIC_URL"
+fi
+
+
+
+
 function install_scripts() {
   cat > /usr/local/bin/with-supabase-config << 'DONE'
 #!/bin/bash
@@ -84,10 +115,15 @@ function install_config() {
 
   mkdir -p /etc/supabase || error "failed to create /etc/supabase"
 
+  # download helper scripts
+  wget -O /tmp/get-supabase-jwts.js https://github.com/train360-corp/supabase/releases/download/v__VERSION__/get-supabase-jwts.js
+
   DASHBOARD_USERNAME="admin"
   DASHBOARD_PASSWORD=$(openssl rand -base64 48 | tr -dc 'A-Za-z0-9' | head -c 64)
   POSTGRES_PASSWORD=$(openssl rand -base64 48 | tr -dc 'A-Za-z0-9' | head -c 64)
   JWT_SECRET=$(openssl rand -base64 48 | tr -dc 'A-Za-z0-9' | head -c 64)
+  ANON_JWT=$(node /tmp/get-supabase-jwts.js --secret "$JWT_SECRET" --type anon | tr -d '\n\r')
+  SERVICE_JWT=$(node /tmp/get-supabase-jwts.js --secret "$JWT_SECRET" --type service | tr -d '\n\r')
 
   # write the config file
   cat > /etc/supabase/conf.env <<EOF
@@ -99,6 +135,10 @@ JWT_SECRET=$JWT_SECRET
 PGRST_DB_URI=postgres://authenticator=$POSTGRES_PASSWORD@127.0.0.1:5432/postgres
 PGRST_APP_SETTINGS_JWT_SECRET=$JWT_SECRET
 PGRST_JWT_SECRET=$JWT_SECRET
+SUPABASE_PUBLIC_URL=$PUBLIC_URL
+SUPABASE_ANON_KEY=$ANON_JWT
+SUPABASE_SERVICE_KEY=$SERVICE_JWT
+AUTH_JWT_SECRET=$JWT_SECRET
 EOF
 
   chmod 644 /etc/supabase/conf.env
@@ -382,7 +422,19 @@ function install_postgrest() {
   ok "Postgrest installed"
 }
 
+function install_deps() {
+
+  info "installing Node..."
+  apt-get install -y curl
+  curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+  apt-get install -y nodejs
+  node -v
+  ok "Node installed"
+
+}
+
 function install() {
+  install_deps
   install_config
   install_scripts
   install_kong

@@ -75,6 +75,7 @@ jobs:
             artifacts/**/*.deb
             LICENSE
             install.sh
+            scripts/get-supabase-jwts.js
           body: |
             ## Installation
 

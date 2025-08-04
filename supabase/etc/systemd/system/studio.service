@@ -1,0 +1,22 @@
+[Unit]
+Description=Studio (Supabase)
+After=network.target postgres.service
+Wants=network.target
+Requires=postgres.service
+
+[Service]
+Type=simple
+User=nextjs
+ExecStart=/usr/bin/env node /supabase/studio/apps/studio/server.js
+Restart=on-failure
+RestartSec=3
+LimitNOFILE=4096
+KillSignal=SIGTERM
+
+Environment=HOSTNAME=127.0.0.1
+Environment=PORT=3333
+Environment=STUDIO_PG_META_URL=http://127.0.0.1:8080
+Environment=SUPABASE_URL=http://127.0.0.1:8000
+
+[Install]
+WantedBy=multi-user.target

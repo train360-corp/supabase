@@ -64,6 +64,7 @@ jobs:
         with:
           name: supabase/studio@${{ inputs.from }}
           tag_name: supabase/studio@${{ inputs.from }}
+          make_latest: false
           files: |
             studio-*.tar.gz
           body: |
