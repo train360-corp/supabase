@@ -137,7 +137,7 @@ function install_deps() {
     "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
     $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
     tee /etc/apt/sources.list.d/docker.list > /dev/null
-  apt-get update && apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
   ok "Docker installed"
 }
 
@@ -332,9 +332,6 @@ function install_postgres() {
   mkdir -p /var/lib/postgresql/data
   chown -R postgres:postgres /var/lib/postgresql/data
   chmod 0700 /var/lib/postgresql/data
-
-  # initialize the db
-  sudo -u postgres env LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8 LOCALE_ARCHIVE=/usr/lib/locale/locale-archive /usr/local/bin/with-supabase-config initdb -D /var/lib/postgresql/data
 
   ####################
   # setup-wal-g.yml

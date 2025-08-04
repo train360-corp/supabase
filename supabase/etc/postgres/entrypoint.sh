@@ -102,25 +102,28 @@ function process_init_files() {
 
 if [ -z "${DATABASE_ALREADY_EXISTS:-}" ]; then
 
+  POSTGRES_USER="postgres"
+
+  echo "[entrypoint.sh] INITIALIZING DB..."
+
+  # initialize the database directory
+  LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8 LOCALE_ARCHIVE=/usr/lib/locale/locale-archive /usr/local/bin/with-supabase-config initdb -D /var/lib/postgresql/data
+
   # PGPASSWORD is required for psql when authentication is required for 'local' connections via pg_hba.conf and is otherwise harmless
   # e.g. when '--auth=md5' or '--auth-local=md5' is used in POSTGRES_INITDB_ARGS
   export PGPASSWORD="${PGPASSWORD:-$POSTGRES_PASSWORD}"
   temp_server_start "$@"
 
+  echo "[entrypoint.sh] SETTING UP DB..."
   setup_db
 
-  shopt -s globstar nullglob
-  process_init_files /etc/postgres/initdb.d/**/*
-  shopt -u globstar nullglob
+  echo "[entrypoint.sh] PROCESSING INIT FILES..."
+  process_init_files /etc/postgres/initdb.d/*
 
   temp_server_stop
   unset PGPASSWORD
 
-  cat <<-'EOM'
-
-PostgreSQL init process complete; ready for start up.
-
-EOM
+  echo "[entrypoint.sh] PostgreSQL init process complete; ready for start up."
 fi
 
 # Exec the passed command (usually `postgres`)
