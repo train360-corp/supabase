@@ -109,6 +109,21 @@ DONE
   chmod +x /usr/local/bin/with-supabase-config
 }
 
+
+# Install dependencies needed for this script to run properly
+function install_deps() {
+
+  # Node
+  info "installing Node..."
+  apt-get install -y curl
+  curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+  apt-get install -y nodejs
+  node -v
+  ok "Node installed"
+
+}
+
+
 # Install config
 function install_config() {
   info "writing config file"
@@ -132,7 +147,7 @@ DASHBOARD_PASSWORD=$DASHBOARD_PASSWORD
 PGPASSWORD=$POSTGRES_PASSWORD
 POSTGRES_PASSWORD=$POSTGRES_PASSWORD
 JWT_SECRET=$JWT_SECRET
-PGRST_DB_URI=postgres://authenticator=$POSTGRES_PASSWORD@127.0.0.1:5432/postgres
+PGRST_DB_URI=postgres://authenticator:$POSTGRES_PASSWORD@127.0.0.1:5432/postgres
 PGRST_APP_SETTINGS_JWT_SECRET=$JWT_SECRET
 PGRST_JWT_SECRET=$JWT_SECRET
 SUPABASE_PUBLIC_URL=$PUBLIC_URL
@@ -250,6 +265,7 @@ function install_postgres() {
 
   PATH="${PATH}:/nix/var/nix/profiles/default/bin"
 
+  rm -rf /tmp/supabase-postgres
   git clone https://github.com/supabase/postgres.git /tmp/supabase-postgres
   cd /tmp/supabase-postgres
 
@@ -267,13 +283,13 @@ function install_postgres() {
       && chown -R postgres:postgres /usr/share/postgresql
 
   # Create symbolic links
-  ln -s /nix/var/nix/profiles/default/bin/* /usr/lib/postgresql/bin/ \
-      && ln -s /nix/var/nix/profiles/default/bin/* /usr/bin/ \
+  ln -sf /nix/var/nix/profiles/default/bin/* /usr/lib/postgresql/bin/ \
+      && ln -sf /nix/var/nix/profiles/default/bin/* /usr/bin/ \
       && chown -R postgres:postgres /usr/bin
 
   # Create symbolic links for PostgreSQL shares
-  ln -s /nix/var/nix/profiles/default/share/postgresql/* /usr/lib/postgresql/share/postgresql/
-  ln -s /nix/var/nix/profiles/default/share/postgresql/* /usr/share/postgresql/
+  ln -sf /nix/var/nix/profiles/default/share/postgresql/* /usr/lib/postgresql/share/postgresql/
+  ln -sf /nix/var/nix/profiles/default/share/postgresql/* /usr/share/postgresql/
   chown -R postgres:postgres /usr/lib/postgresql/share/postgresql/
   chown -R postgres:postgres /usr/share/postgresql/
 
@@ -422,14 +438,10 @@ function install_postgrest() {
   ok "Postgrest installed"
 }
 
-function install_deps() {
+function install_studio() {
+    info "!!! TODO: install_studio !!!"
 
-  info "installing Node..."
-  apt-get install -y curl
-  curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
-  apt-get install -y nodejs
-  node -v
-  ok "Node installed"
+    https://github.com/train360-corp/supabase/releases/download/supabase%2Fstudio%4088dca021d6b5201b3561a37f452a4f91598a8311/studio-amd64.tar.gz
 
 }
 
@@ -440,6 +452,7 @@ function install() {
   install_kong
   install_postgres
   install_postgrest
+  install_studio
   install_package
 }
 

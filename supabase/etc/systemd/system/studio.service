@@ -7,7 +7,7 @@ Requires=postgres.service
 [Service]
 Type=simple
 User=nextjs
-ExecStart=/usr/bin/env node /supabase/studio/apps/studio/server.js
+ExecStart=/usr/local/bin/with-supabase-config node /supabase/studio/apps/studio/server.js
 Restart=on-failure
 RestartSec=3
 LimitNOFILE=4096
