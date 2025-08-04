@@ -10,6 +10,7 @@ TARGETARCH=""
 
 # Deps
 STUDIO_VERSION="2025.07.07-sha-1d3b0ba"
+INIT_DB_SCRIPTS="/etc/postgres/initdb.d"
 
 # Colors
 RED="\033[1;31m"
@@ -221,6 +222,8 @@ function install_postgres() {
 
   info "installing Postgres"
 
+  mkdir -p "$INIT_DB_SCRIPTS"
+
   postgresql_major=15
   postgresql_release=${postgresql_major}.1
   sfcgal_release=1.3.10
@@ -414,9 +417,20 @@ function install_postgres() {
     chown postgres:postgres /etc/postgresql-custom
 
   # # Include schema migrations
-  cp -r /tmp/supabase-postgres/migrations/db /docker-entrypoint-initdb.d/
-  cp /tmp/supabase-postgres/ansible/files/pgbouncer_config/pgbouncer_auth_schema.sql /docker-entrypoint-initdb.d/init-scripts/00-schema.sql
-  cp /tmp/supabase-postgres/ansible/files/stat_extension.sql /docker-entrypoint-initdb.d/migrations/00-extension.sql
+  mkdir -p "$INIT_DB_SCRIPTS/migrations" \
+      && mkdir -p "$INIT_DB_SCRIPTS/init-scripts"
+  cp -r /tmp/supabase-postgres/migrations/db "$INIT_DB_SCRIPTS/"
+  cp /tmp/supabase-postgres/ansible/files/pgbouncer_config/pgbouncer_auth_schema.sql "$INIT_DB_SCRIPTS/init-scripts/00-schema.sql"
+  cp /tmp/supabase-postgres/ansible/files/stat_extension.sql "$INIT_DB_SCRIPTS/migrations/00-extension.sql"
+
+# # HANDLED BY PACKAGE INSTALL:
+#  cp ./supabase/db/realtime.sql "$INIT_DB_SCRIPTS/migrations/99-realtime.sql"
+#  cp ./supabase/db/webhooks.sql "$INIT_DB_SCRIPTS/init-scripts/98-webhooks.sql"
+#  cp ./supabase/db/roles.sql "$INIT_DB_SCRIPTS/init-scripts/99-roles.sql"
+#  cp ./supabase/db/jwt.sql "$INIT_DB_SCRIPTS/init-scripts/99-jwt.sql"
+#  cp ./supabase/db/_supabase.sql "$INIT_DB_SCRIPTS/migrations/97-_supabase.sql"
+#  cp ./supabase/db/logs.sql "$INIT_DB_SCRIPTS/migrations/99-logs.sql"
+#  cp ./supabase/db/pooler.sql "$INIT_DB_SCRIPTS/migrations/99-pooler.sql"
 
   mkdir -p /var/run/postgresql && chown postgres:postgres /var/run/postgresql
 
@@ -485,6 +499,9 @@ function do_install() {
   install_postgrest
   install_studio
   install_package
+
+  # must be run AFTER install_package
+  chown -R postgres:postgres "$INIT_DB_SCRIPTS"
 }
 
 do_install

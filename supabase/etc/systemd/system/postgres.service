@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 User=postgres
 Group=postgres
-ExecStart=/usr/local/bin/with-supabase-config /usr/lib/postgresql/bin/postgres -D /etc/postgresql
+ExecStart=/usr/local/bin/with-supabase-config /etc/postgres/entrypoint.sh postgres -D /etc/postgresql
 Restart=on-failure
 LimitNOFILE=4096
 Environment=PGDATA=/var/lib/postgresql/data
