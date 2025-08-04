@@ -179,9 +179,6 @@ EOF
 
 # Install Kong
 install_kong() {
-
-  KONG_CONFIG_URL="https://raw.githubusercontent.com/supabase/supabase/03aa5c34740e63a7af09c46a749a4506985363dc/docker/volumes/api/kong.yml"
-
   info "installing Kong"
   if [[ "$ID" == "debian" || "$ID" == "ubuntu" ]]; then
     codename=$(lsb_release -sc 2>/dev/null || grep -oP 'VERSION_CODENAME=\K\w+' /etc/os-release)
@@ -202,9 +199,7 @@ install_kong() {
   fi
 
   mkdir -p /etc/kong || error "failed to create /etc/kong"
-  curl -sLo /etc/kong/base.kong.yml "$KONG_CONFIG_URL"
-  chown kong:0 /etc/kong/base.kong.yml \
-     && chown kong:0 /usr/local/bin/kong \
+  chown kong:0 /usr/local/bin/kong \
      && chown -R kong:0 /usr/local/kong \
      && ln -s /usr/local/openresty/luajit/bin/luajit /usr/local/bin/luajit \
      && ln -s /usr/local/openresty/luajit/bin/luajit /usr/local/bin/lua \

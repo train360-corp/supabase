@@ -14,3 +14,7 @@ systemctl start postgres
 # postgrest
 systemctl enable postgrest
 systemctl start postgrest
+
+# studio
+systemctl enable studio
+systemctl start studio
