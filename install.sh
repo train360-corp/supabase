@@ -8,6 +8,9 @@ SUPPORTED_ARCHS=("x86_64" "aarch64")
 SUPPORTED_DISTROS=("debian" "ubuntu")
 TARGETARCH=""
 
+# Deps
+STUDIO_VERSION="2025.07.07-sha-1d3b0ba"
+
 # Colors
 RED="\033[1;31m"
 BLUE="\033[1;34m"
@@ -121,6 +124,20 @@ function install_deps() {
   node -v
   ok "Node installed"
 
+  # Docker
+  info "installing Docker..."
+  for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do apt-get remove $pkg; done
+  apt-get update \
+    && apt-get install ca-certificates curl \
+    && install -m 0755 -d /etc/apt/keyrings \
+    && curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc \
+    && chmod a+r /etc/apt/keyrings/docker.asc
+  echo \
+    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+    $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
+    tee /etc/apt/sources.list.d/docker.list > /dev/null
+  apt-get update && apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  ok "Docker installed"
 }
 
 
@@ -441,9 +458,26 @@ function install_postgrest() {
 function install_studio() {
 
   info "installing Supabase Studio"
-  wget -O /tmp/supabase-studio.tar.gz "https://github.com/train360-corp/supabase/releases/download/supabase%2Fstudio%4088dca021d6b5201b3561a37f452a4f91598a8311/studio-$(uname -m).tar.gz"
-  tar -xvf /tmp/supabase-studio.tar.gz
-  rm -rf /tmp/supabase-studio.tar.gz
+
+  # copy source files
+  rm -rf /supabase/studio
+  mkdir -p /supabase/studio
+  docker create --name temp-studio "public.ecr.aws/supabase/studio:$STUDIO_VERSION"
+  docker cp temp-studio:/app/. /supabase/studio
+  docker rm temp-studio
+  docker rmi "public.ecr.aws/supabase/studio:$STUDIO_VERSION"
+
+  # fix permissions
+  addgroup --system nodejs
+  adduser \
+    --system \
+    --no-create-home \
+    --shell /usr/sbin/nologin \
+    --ingroup nodejs \
+    nextjs
+  chown -R root:nodejs /supabase/studio
+  chmod -R u=rX,g=rX,o= /supabase/studio
+
   ok "Supabase Studio installed"
 }
 
