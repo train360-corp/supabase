@@ -439,10 +439,12 @@ function install_postgrest() {
 }
 
 function install_studio() {
-    info "!!! TODO: install_studio !!!"
 
-    https://github.com/train360-corp/supabase/releases/download/supabase%2Fstudio%4088dca021d6b5201b3561a37f452a4f91598a8311/studio-amd64.tar.gz
-
+  info "installing Supabase Studio"
+  wget -O /tmp/supabase-studio.tar.gz "https://github.com/train360-corp/supabase/releases/download/supabase%2Fstudio%4088dca021d6b5201b3561a37f452a4f91598a8311/studio-$(uname -m).tar.gz"
+  tar -xvf /tmp/supabase-studio.tar.gz
+  rm -rf /tmp/supabase-studio.tar.gz
+  ok "Supabase Studio installed"
 }
 
 function install() {

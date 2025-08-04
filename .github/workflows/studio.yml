@@ -56,8 +56,8 @@ jobs:
           path: artifacts
 
       - run: |
-          tar -czf studio-amd64.tar.gz -C artifacts/studio-amd64 .
-          tar -czf studio-arm64.tar.gz -C artifacts/studio-arm64 .
+          tar -czf studio-x86_64.tar.gz -C artifacts/studio-x86_64 .
+          tar -czf studio-aarch64.tar.gz -C artifacts/studio-aarch64 .
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
