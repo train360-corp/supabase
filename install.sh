@@ -481,7 +481,7 @@ function install_studio() {
   ok "Supabase Studio installed"
 }
 
-function install() {
+function do_install() {
   install_deps
   install_config
   install_scripts
@@ -492,4 +492,4 @@ function install() {
   install_package
 }
 
-install
+do_install
